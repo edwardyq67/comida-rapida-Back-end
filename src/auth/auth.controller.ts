@@ -1,9 +1,18 @@
 // src/auth/auth.controller.ts
-import { Controller, Post, Body, Res } from '@nestjs/common';
-import { Response } from 'express';
+import {
+  Controller,
+  Post,
+  Body,
+  Res,
+  UseGuards,
+  Get,
+  Req,
+} from '@nestjs/common';
+import { Response, Request } from 'express'; // 👈 Importar Request
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard'; // 👈 Importar el guard
 
 @Controller('auth')
 export class AuthController {
@@ -36,5 +45,18 @@ export class AuthController {
   logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie('jwt');
     return { message: 'Logout exitoso' };
+  }
+
+  @Get('verify')
+  @UseGuards(JwtAuthGuard)
+  verifyAuth(@Req() req: Request) {
+    return {
+      authenticated: true,
+      user: {
+        id: req.user!['sub'],
+        email: req.user!['email'],
+        rol: req.user!['rol'],
+      },
+    };
   }
 }

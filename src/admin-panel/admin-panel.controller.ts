@@ -18,7 +18,7 @@ import {
   CreateCategoriaDto,
   CreateIngredienteDto,
   CreateTamanoDto,
-  CreatePorcionDto,
+  CreateOpcionesDto,
   CreateProductoDto,
 } from './dto/create-admin-panel.dto';
 import {
@@ -27,7 +27,7 @@ import {
   UpdateCategoriaDto,
   UpdateIngredienteDto,
   UpdateTamanoDto,
-  UpdatePorcionDto,
+  UpdateOpcionesDto,
   UpdateProductoDto,
 } from './dto/update-admin-panel.dto';
 import { Rol } from '@prisma/client';
@@ -161,29 +161,29 @@ export class AdminPanelController {
     return this.adminPanelService.removeTamano(id);
   }
 
-  // ================= PORCION =================
+  // ================= OPCIONES =================
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
-  @Post('porcion')
-  createPorcion(@Body() dto: CreatePorcionDto) {
-    return this.adminPanelService.createPorcion(dto);
+  @Post('opciones')
+  createOpciones(@Body() dto: CreateOpcionesDto) {
+    return this.adminPanelService.createOpciones(dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
-  @Patch('porcion/:id')
-  updatePorcion(
+  @Patch('opciones/:id')
+  updateOpciones(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdatePorcionDto,
+    @Body() dto: UpdateOpcionesDto,
   ) {
-    return this.adminPanelService.updatePorcion(id, dto);
+    return this.adminPanelService.updateOpciones(id, dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
-  @Delete('porcion/:id')
-  removePorcion(@Param('id', ParseIntPipe) id: number) {
-    return this.adminPanelService.removePorcion(id);
+  @Delete('opciones/:id')
+  removeOpciones(@Param('id', ParseIntPipe) id: number) {
+    return this.adminPanelService.removeOpciones(id);
   }
 
   // ================= PRODUCTO =================

@@ -6,7 +6,7 @@ import {
   CreateCategoriaDto,
   CreateIngredienteDto,
   CreateTamanoDto,
-  CreatePorcionDto,
+  CreateOpcionesDto,
   CreateProductoDto,
 } from './create-admin-panel.dto';
 
@@ -15,5 +15,5 @@ export class UpdateEstadoPedidoDto extends PartialType(CreateEstadoPedidoDto) {}
 export class UpdateCategoriaDto extends PartialType(CreateCategoriaDto) {}
 export class UpdateIngredienteDto extends PartialType(CreateIngredienteDto) {}
 export class UpdateTamanoDto extends PartialType(CreateTamanoDto) {}
-export class UpdatePorcionDto extends PartialType(CreatePorcionDto) {}
+export class UpdateOpcionesDto extends PartialType(CreateOpcionesDto) {}
 export class UpdateProductoDto extends PartialType(CreateProductoDto) {}

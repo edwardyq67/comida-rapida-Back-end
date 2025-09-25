@@ -74,15 +74,15 @@ export class PublicPanelController {
 
   // ================= PORCION =================
   @Public()
-  @Get('porcion')
-  findAllPorcion() {
-    return this.publicPanelService.findAllPorcion();
+  @Get('opciones')
+  findAllOpciones() {
+    return this.publicPanelService.findAllOpciones();
   }
 
   @Public()
-  @Get('porcion/:id')
-  findOnePorcion(@Param('id', ParseIntPipe) id: number) {
-    return this.publicPanelService.findOnePorcion(id);
+  @Get('opciones/:id')
+  findOneOpcion(@Param('id', ParseIntPipe) id: number) {
+    return this.publicPanelService.findOneOpcion(id);
   }
 
   // ================= PRODUCTO =================

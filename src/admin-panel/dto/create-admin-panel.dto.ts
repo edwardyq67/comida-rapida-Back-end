@@ -1,4 +1,4 @@
-// src/admin-panel/dto/create-adicional.dto.ts
+// src/admin-panel/dto/create-admin-panel.dto.ts
 import { IsNotEmpty, IsOptional, IsNumber, IsString } from 'class-validator';
 
 export class CreateAdicionalDto {
@@ -43,10 +43,14 @@ export class CreateTamanoDto {
   nombre: string;
 }
 
-export class CreatePorcionDto {
+export class CreateOpcionesDto {
   @IsNotEmpty()
   @IsString()
   nombre: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  precio: number;
 }
 
 export class CreateProductoDto {
@@ -76,5 +80,5 @@ export class CreateProductoDto {
 
   @IsOptional()
   @IsNumber()
-  porcion_id?: number;
+  opciones_id?: number;
 }

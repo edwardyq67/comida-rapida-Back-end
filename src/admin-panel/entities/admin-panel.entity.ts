@@ -1,18 +1,20 @@
-import {
+// src/public/public.entity.ts
+import type {
   Adicional,
   EstadoPedido,
   Categoria,
   Ingrediente,
   Tamano,
-  Porcion,
+  Opciones,
   Producto,
 } from '@prisma/client';
 
-export type AdminPanelEntity =
-  | Adicional
-  | EstadoPedido
-  | Categoria
-  | Ingrediente
-  | Tamano
-  | Porcion
-  | Producto;
+export type {
+  Adicional,
+  EstadoPedido,
+  Categoria,
+  Ingrediente,
+  Tamano,
+  Opciones,
+  Producto,
+};
