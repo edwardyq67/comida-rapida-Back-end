@@ -38,7 +38,7 @@ export class AdminPanelController {
   constructor(private readonly adminPanelService: AdminPanelService) {}
 
   // ================= ADICIONAL =================
-  @UseGuards(JwtAuthGuard, RolesGuard)
+
   @Roles(Rol.ADMIN)
   @Post('adicional')
   async createAdicional(@Body() dto: CreateAdicionalDto) {
@@ -52,7 +52,6 @@ export class AdminPanelController {
     }
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Patch('adicional/:id')
   async updateAdicional(
@@ -70,7 +69,7 @@ export class AdminPanelController {
   }
 
   // ================= ESTADO PEDIDO =================
-  @UseGuards(JwtAuthGuard, RolesGuard)
+
   @Roles(Rol.ADMIN)
   @Post('estado-pedido')
   async createEstadoPedido(@Body() dto: CreateEstadoPedidoDto) {
@@ -84,7 +83,6 @@ export class AdminPanelController {
     }
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Patch('estado-pedido/:id')
   async updateEstadoPedido(
@@ -102,7 +100,7 @@ export class AdminPanelController {
   }
 
   // ================= CATEGORIA =================
-  @UseGuards(JwtAuthGuard, RolesGuard)
+
   @Roles(Rol.ADMIN)
   @Post('categoria')
   async createCategoria(@Body() dto: CreateCategoriaDto) {
@@ -116,7 +114,6 @@ export class AdminPanelController {
     }
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Patch('categoria/:id')
   async updateCategoria(
@@ -134,7 +131,7 @@ export class AdminPanelController {
   }
 
   // ================= INGREDIENTE =================
-  @UseGuards(JwtAuthGuard, RolesGuard)
+
   @Roles(Rol.ADMIN)
   @Post('ingrediente')
   async createIngrediente(@Body() dto: CreateIngredienteDto) {
@@ -148,7 +145,6 @@ export class AdminPanelController {
     }
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Patch('ingrediente/:id')
   async updateIngrediente(
@@ -166,7 +162,7 @@ export class AdminPanelController {
   }
 
   // ================= TAMANO =================
-  @UseGuards(JwtAuthGuard, RolesGuard)
+
   @Roles(Rol.ADMIN)
   @Post('tamano')
   async createTamano(@Body() dto: CreateTamanoDto) {
@@ -180,7 +176,6 @@ export class AdminPanelController {
     }
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Patch('tamano/:id')
   async updateTamano(
@@ -198,7 +193,7 @@ export class AdminPanelController {
   }
 
   // ================= OPCIONES =================
-  @UseGuards(JwtAuthGuard, RolesGuard)
+
   @Roles(Rol.ADMIN)
   @Post('opciones')
   async createOpciones(@Body() dto: CreateOpcionesDto) {
@@ -212,7 +207,6 @@ export class AdminPanelController {
     }
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Patch('opciones/:id')
   async updateOpciones(
@@ -229,7 +223,7 @@ export class AdminPanelController {
     }
   }
   // ================= PRODUCTO =================
-  @UseGuards(JwtAuthGuard, RolesGuard)
+
   @Roles(Rol.ADMIN)
   @Post('producto')
   async createProducto(@Body() dto: CreateProductoDto) {
@@ -243,7 +237,6 @@ export class AdminPanelController {
     }
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Patch('producto/:id')
   async updateProducto(

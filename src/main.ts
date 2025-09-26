@@ -2,7 +2,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
-import cookieParser from 'cookie-parser'; // ✅ import default
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -10,10 +10,21 @@ async function bootstrap() {
   // Cookie parser para leer cookies
   app.use(cookieParser());
 
-  // Habilitar CORS si tu frontend está en otro dominio/puerto
+  // Configuración CORS ESPECÍFICA para tu frontend
   app.enableCors({
-    origin: true, // o el dominio de tu frontend
-    credentials: true, // necesario para cookies
+    origin: [
+      'http://localhost:3000', // Desarrollo local
+      'https://comida-rapida-front-end.vercel.app', // TU FRONTEND
+    ],
+    credentials: true, // ← CRÍTICO para cookies
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Cookie',
+      'Set-Cookie',
+    ],
   });
 
   const configService = app.get(ConfigService);
