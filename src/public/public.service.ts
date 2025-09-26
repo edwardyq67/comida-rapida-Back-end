@@ -158,41 +158,59 @@ export class PublicPanelService {
   }
 
   async createPedido(pedidoData: any) {
-    return await this.prisma.pedido.create({
-      data: {
-        cliente: pedidoData.cliente,
-        notas: pedidoData.notas,
-        total: pedidoData.total,
-        estado_id: pedidoData.estado_id || 1,
-        pedidoItems: {
-          create:
-            pedidoData.pedidoItems.create?.map((item: any) => ({
-              producto_id: item.producto_id,
-              cantidad: item.cantidad,
-              precio_unitario: item.precio_unitario,
-              subtotal: item.subtotal,
-              productoTamano_id: item.productoTamano_id,
-              opcionId: item.opcionId,
-              // CAMBIAR: usar pedidoIngredientes (que es lo que envías)
-              pedidoIngredientes: {
-                create: item.pedidoIngredientes?.create || [],
-              },
-            })) || [],
+    try {
+      console.log('Datos recibidos:', JSON.stringify(pedidoData, null, 2));
+
+      // Validar datos básicos
+      if (!pedidoData.cliente || !pedidoData.total) {
+        throw new Error('Datos incompletos');
+      }
+
+      const result = await this.prisma.pedido.create({
+        data: {
+          cliente: pedidoData.cliente,
+          notas: pedidoData.notas,
+          total: pedidoData.total,
+          estado_id: pedidoData.estado_id || 1,
+          pedidoItems: {
+            create:
+              pedidoData.pedidoItems.create?.map((item: any) => ({
+                producto_id: item.producto_id,
+                cantidad: item.cantidad,
+                precio_unitario: item.precio_unitario,
+                subtotal: item.subtotal,
+                productoTamano_id: item.productoTamano_id,
+                opcionId: item.opcionId,
+                pedidoIngredientes: {
+                  create: item.pedidoIngredientes?.create || [],
+                },
+              })) || [],
+          },
         },
-      },
-      include: {
-        estado: true,
-        pedidoItems: {
-          include: {
-            producto: true,
-            pedidoIngredientes: {
-              // ← Cambiar aquí también
-              include: { ingrediente: true },
+        include: {
+          estado: true,
+          pedidoItems: {
+            include: {
+              producto: true,
+              pedidoIngredientes: {
+                include: { ingrediente: true },
+              },
             },
           },
         },
-      },
-    });
+      });
+
+      console.log('Pedido creado exitosamente:', result);
+      return result;
+    } catch (error) {
+      console.error('Error detallado al crear pedido:', error);
+      // Log más específico para Prisma
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        console.error('Código de error Prisma:', error.code);
+        console.error('Meta del error:', error.meta);
+      }
+      throw new Error('Error al crear el pedido: ' + error.message);
+    }
   }
 
   async updatePedido(id: number, pedidoData: any) {
