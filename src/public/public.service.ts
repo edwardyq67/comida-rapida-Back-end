@@ -161,17 +161,12 @@ export class PublicPanelService {
     try {
       console.log('Datos recibidos:', JSON.stringify(pedidoData, null, 2));
 
-      // Validar datos básicos
-      if (!pedidoData.cliente || !pedidoData.total) {
-        throw new Error('Datos incompletos');
-      }
-
       const result = await this.prisma.pedido.create({
         data: {
           cliente: pedidoData.cliente,
           notas: pedidoData.notas,
           total: pedidoData.total,
-          estado_id: pedidoData.estado_id || 1,
+          estado_id: 1,
           pedidoItems: {
             create:
               pedidoData.pedidoItems.create?.map((item: any) => ({
@@ -179,8 +174,8 @@ export class PublicPanelService {
                 cantidad: item.cantidad,
                 precio_unitario: item.precio_unitario,
                 subtotal: item.subtotal,
-                productoTamano_id: item.productoTamano_id,
-                opcionId: item.opcionId,
+                opcionId: item.opcionId || null,
+                productoTamano_id: null, // ← FORZAR a null temporalmente
                 pedidoIngredientes: {
                   create: item.pedidoIngredientes?.create || [],
                 },
@@ -204,11 +199,6 @@ export class PublicPanelService {
       return result;
     } catch (error) {
       console.error('Error detallado al crear pedido:', error);
-      // Log más específico para Prisma
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        console.error('Código de error Prisma:', error.code);
-        console.error('Meta del error:', error.meta);
-      }
       throw new Error('Error al crear el pedido: ' + error.message);
     }
   }
