@@ -6,7 +6,11 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
+enum Rol {
+  ADMIN
+  KITCHEN
+  USER
+}
 model Usuario {
   id            Int      @id @default(autoincrement())
   email         String   @unique
@@ -32,7 +36,7 @@ model Producto {
   nombre             String
   descripcion        String?
   imagen             String?
-  precio             Float
+  precio             Float?
   activo             Boolean               @default(true)
   categoria_id       Int
   tamano_id          Int?
@@ -189,8 +193,3 @@ model PedidoAdicional {
   @@map("pedido_adicionales")
 }
 
-enum Rol {
-  ADMIN
-  KITCHEN
-  USER
-}
