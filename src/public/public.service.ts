@@ -1,360 +1,523 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  Adicional,
+  EstadoPedido,
+  Categoria,
+  Ingrediente,
+  Tamano,
+  Opciones,
+  Prisma,
+} from '@prisma/client';
+
+type ProductoWithRelations = Prisma.ProductoGetPayload<{
+  select: {
+    id: true;
+    nombre: true;
+    descripcion: true;
+    imagen: true;
+    precio: true;
+    activo: true;
+    categoria: { select: { id: true; nombre: true } };
+    tamano: { select: { id: true; nombre: true } };
+    ingredientes: {
+      select: {
+        id: true;
+        opcional: true;
+        por_defecto: true;
+        ingrediente: { select: { id: true; nombre: true } };
+      };
+    };
+    opciones: {
+      select: {
+        id: true;
+        precio: false;
+        opcion: { select: { id: true; nombre: true } };
+      };
+    };
+  };
+}>;
 
 @Injectable()
 export class PublicPanelService {
-  constructor(private prisma: PrismaService) {}
-
-  // ================= ADICIONAL =================
-  async findAllAdicional() {
-    const adicionales = await this.prisma.adicional.findMany({
-      where: { activo: true },
-    });
-
-    return adicionales.map((adicional) => ({
-      id: adicional.id,
-      nombre: adicional.nombre,
-      precio: adicional.precio,
-      imagen: adicional.imagen,
-    }));
+  constructor(private readonly prisma: PrismaService) {}
+  // ================= estados-pedido =================
+  async createEstadoPedido(estadoData: { nombre: string }) {
+    try {
+      return await this.prisma.estadoPedido.create({
+        data: {
+          nombre: estadoData.nombre,
+        },
+      });
+    } catch (error) {
+      if (error.code === 'P2002') {
+        // Violación de unique constraint
+        throw new error('El nombre del estado ya existe');
+      }
+      throw error;
+    }
   }
 
-  async findOneAdicional(id: number) {
-    const adicional = await this.prisma.adicional.findUnique({
-      where: { id, activo: true },
+  async getEstadosPedido() {
+    return await this.prisma.estadoPedido.findMany({
+      orderBy: { id: 'asc' },
     });
+  }
+  // ================= PEDIDO =================
+  async findAllPedido(params: {
+    estado?: number;
+    cliente?: string;
+    fecha?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const { estado, cliente, fecha, page = 1, limit = 10 } = params;
+    const skip = (page - 1) * limit;
 
-    if (!adicional) return null;
+    const where: any = {};
+    if (estado) where.estado_id = estado;
+    if (cliente) where.cliente = { contains: cliente, mode: 'insensitive' };
+    if (fecha) {
+      const startDate = new Date(fecha);
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 1);
+      where.fecha = { gte: startDate, lt: endDate };
+    }
+
+    const [pedidos, total] = await Promise.all([
+      this.prisma.pedido.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          estado: true,
+          pedidoItems: {
+            include: {
+              producto: true,
+              Tamano: true,
+              Opcion: true,
+              pedidoAdicionales: {
+                include: {
+                  adicional: true,
+                },
+              },
+              pedidoIngredientes: {
+                include: {
+                  ingrediente: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { id: 'asc' }, // ← CAMBIO AQUÍ
+      }),
+      this.prisma.pedido.count({ where }),
+    ]);
 
     return {
-      id: adicional.id,
-      nombre: adicional.nombre,
-      precio: adicional.precio,
-      imagen: adicional.imagen,
+      data: pedidos,
+      meta: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
     };
+  }
+
+  async findOnePedido(id: number) {
+    const pedido = await this.prisma.pedido.findUnique({
+      where: { id },
+      include: {
+        estado: true,
+        pedidoItems: {
+          include: {
+            producto: true,
+            Tamano: true,
+            Opcion: true,
+            productoTamano: true,
+            pedidoAdicionales: {
+              include: {
+                adicional: true,
+              },
+            },
+            pedidoIngredientes: {
+              // ← AGREGAR esto
+              include: { ingrediente: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!pedido) {
+      throw new NotFoundException(`Pedido con ID ${id} no encontrado`);
+    }
+
+    return pedido;
+  }
+
+  async createPedido(pedidoData: any) {
+    return await this.prisma.pedido.create({
+      data: {
+        cliente: pedidoData.cliente,
+        notas: pedidoData.notas,
+        total: pedidoData.total,
+        estado_id: pedidoData.estado_id || 1,
+        pedidoItems: {
+          create:
+            pedidoData.pedidoItems.create?.map((item: any) => ({
+              producto_id: item.producto_id,
+              cantidad: item.cantidad,
+              precio_unitario: item.precio_unitario,
+              subtotal: item.subtotal,
+              productoTamano_id: item.productoTamano_id,
+              opcionId: item.opcionId,
+              // CAMBIAR: usar pedidoIngredientes (que es lo que envías)
+              pedidoIngredientes: {
+                create: item.pedidoIngredientes?.create || [],
+              },
+            })) || [],
+        },
+      },
+      include: {
+        estado: true,
+        pedidoItems: {
+          include: {
+            producto: true,
+            pedidoIngredientes: {
+              // ← Cambiar aquí también
+              include: { ingrediente: true },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async updatePedido(id: number, pedidoData: any) {
+    // Verificar si el pedido existe
+    await this.findOnePedido(id);
+
+    return await this.prisma.pedido.update({
+      where: { id },
+      data: {
+        // Solo actualizar el estado_id
+        estado_id: pedidoData.estado_id,
+      },
+      include: {
+        estado: true,
+        pedidoItems: {
+          include: {
+            producto: true,
+            Tamano: true,
+            Opcion: true,
+            pedidoAdicionales: {
+              include: {
+                adicional: true,
+              },
+            },
+            pedidoIngredientes: {
+              include: {
+                ingrediente: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async updateEstadoPedido(id: number, estadoId: number) {
+    // Verificar si el pedido existe
+    await this.findOnePedido(id);
+
+    return await this.prisma.pedido.update({
+      where: { id },
+      data: { estado_id: estadoId },
+      include: {
+        estado: true,
+      },
+    });
+  }
+
+  async removePedido(id: number) {
+    // Verificar si el pedido existe
+    await this.findOnePedido(id);
+
+    // Eliminar en cascada (depende de tu configuración de BD)
+    await this.prisma.pedidoItem.deleteMany({
+      where: { pedido_id: id },
+    });
+
+    return await this.prisma.pedido.delete({
+      where: { id },
+    });
+  }
+
+  // ================= PEDIDO ITEM =================
+  async findAllPedidoItem(params: { pedidoId?: number }) {
+    const where: any = {};
+    if (params.pedidoId) where.pedido_id = params.pedidoId;
+
+    return await this.prisma.pedidoItem.findMany({
+      where,
+      include: {
+        producto: true,
+        Tamano: true,
+        Opcion: true,
+        pedidoAdicionales: true,
+      },
+    });
+  }
+
+  async findOnePedidoItem(id: number) {
+    const pedidoItem = await this.prisma.pedidoItem.findUnique({
+      where: { id },
+      include: {
+        producto: true,
+        Tamano: true,
+        Opcion: true,
+        pedidoAdicionales: {
+          include: {
+            adicional: true,
+          },
+        },
+      },
+    });
+
+    if (!pedidoItem) {
+      throw new NotFoundException(`PedidoItem con ID ${id} no encontrado`);
+    }
+
+    return pedidoItem;
+  }
+
+  async createPedidoItem(pedidoItemData: any) {
+    return await this.prisma.pedidoItem.create({
+      data: {
+        pedido_id: pedidoItemData.pedido_id,
+        producto_id: pedidoItemData.producto_id,
+        cantidad: pedidoItemData.cantidad,
+        precio_unitario: pedidoItemData.precio_unitario,
+        subtotal: pedidoItemData.subtotal,
+        observaciones: pedidoItemData.observaciones,
+        productoTamano_id: pedidoItemData.productoTamano_id,
+        opcionId: pedidoItemData.opcionId,
+
+        pedidoAdicionales: {
+          create: pedidoItemData.pedidoAdicionales || [],
+        },
+      },
+      include: {
+        producto: true,
+
+        pedidoAdicionales: true,
+      },
+    });
+  }
+
+  async updatePedidoItem(id: number, pedidoItemData: any) {
+    await this.findOnePedidoItem(id);
+
+    return await this.prisma.pedidoItem.update({
+      where: { id },
+      data: pedidoItemData,
+      include: {
+        producto: true,
+
+        pedidoAdicionales: true,
+      },
+    });
+  }
+
+  async removePedidoItem(id: number) {
+    await this.findOnePedidoItem(id);
+
+    await this.prisma.pedidoAdicional.deleteMany({
+      where: { pedidoItem_id: id },
+    });
+
+    return await this.prisma.pedidoItem.delete({
+      where: { id },
+    });
+  }
+
+  // ================= ADICIONAL =================
+  async findAllAdicional(): Promise<Adicional[]> {
+    const result = await this.prisma.adicional.findMany();
+    return result;
+  }
+
+  async findOneAdicional(id: number): Promise<Adicional> {
+    const adicional = await this.prisma.adicional.findUnique({ where: { id } });
+    if (!adicional) {
+      throw new NotFoundException(`Adicional ${id} no encontrado`);
+    }
+    return adicional;
   }
 
   // ================= ESTADO PEDIDO =================
-  async findAllEstadoPedido() {
-    const estados = await this.prisma.estadoPedido.findMany();
-
-    return estados.map((estado) => ({
-      id: estado.id,
-      nombre: estado.nombre,
-    }));
+  async findAllEstadoPedido(): Promise<EstadoPedido[]> {
+    const result = await this.prisma.estadoPedido.findMany();
+    return result;
   }
 
-  async findOneEstadoPedido(id: number) {
-    const estado = await this.prisma.estadoPedido.findUnique({
-      where: { id },
-    });
-
-    if (!estado) return null;
-
-    return {
-      id: estado.id,
-      nombre: estado.nombre,
-    };
+  async findOneEstadoPedido(id: number): Promise<EstadoPedido> {
+    const estado = await this.prisma.estadoPedido.findUnique({ where: { id } });
+    if (!estado) {
+      throw new NotFoundException(`EstadoPedido ${id} no encontrado`);
+    }
+    return estado;
   }
 
   // ================= CATEGORIA =================
-  async findAllCategoria() {
-    const categorias = await this.prisma.categoria.findMany({
-      where: { activo: true },
-      include: {
-        productos: {
-          where: { activo: true },
-          include: {
-            tamano: true,
-            opciones: {
-              include: {
-                opcion: true,
-              },
-            },
-            ingredientes: {
-              include: {
-                ingrediente: true,
-              },
-            },
-            tamanosDisponibles: {
-              include: {
-                tamano: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    return categorias.map((categoria) => ({
-      id: categoria.id,
-      nombre: categoria.nombre,
-      imagen: categoria.imagen,
-      productos: categoria.productos.map((producto) => ({
-        id: producto.id,
-        nombre: producto.nombre,
-        descripcion: producto.descripcion,
-        imagen: producto.imagen,
-        precio: producto.precio,
-        tamano: producto.tamano
-          ? {
-              id: producto.tamano.id,
-              nombre: producto.tamano.nombre,
-            }
-          : null,
-        opciones: producto.opciones.map((po) => ({
-          id: po.opcion.id,
-          nombre: po.opcion.nombre,
-          precio: po.precio,
-        })),
-        ingredientes: producto.ingredientes.map((pi) => ({
-          id: pi.ingrediente.id,
-          nombre: pi.ingrediente.nombre,
-          opcional: pi.opcional,
-          porDefecto: pi.por_defecto,
-        })),
-        tamanos: producto.tamanosDisponibles.map((pt) => ({
-          id: pt.tamano.id,
-          nombre: pt.tamano.nombre,
-          precio: pt.precio,
-        })),
-      })),
-    }));
+  async findAllCategoria(): Promise<Categoria[]> {
+    const result = await this.prisma.categoria.findMany();
+    return result;
   }
 
-  async findOneCategoria(id: number) {
-    const categoria = await this.prisma.categoria.findUnique({
-      where: { id, activo: true },
-      include: {
-        productos: {
-          where: { activo: true },
-          include: {
-            tamano: true,
-            opciones: {
-              include: {
-                opcion: true,
-              },
-            },
-            ingredientes: {
-              include: {
-                ingrediente: true,
-              },
-            },
-            tamanosDisponibles: {
-              include: {
-                tamano: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!categoria) return null;
-
-    return {
-      id: categoria.id,
-      nombre: categoria.nombre,
-      imagen: categoria.imagen,
-      productos: categoria.productos.map((producto) => ({
-        id: producto.id,
-        nombre: producto.nombre,
-        descripcion: producto.descripcion,
-        imagen: producto.imagen,
-        precio: producto.precio,
-        tamano: producto.tamano
-          ? {
-              id: producto.tamano.id,
-              nombre: producto.tamano.nombre,
-            }
-          : null,
-        opciones: producto.opciones.map((po) => ({
-          id: po.opcion.id,
-          nombre: po.opcion.nombre,
-          precio: po.precio,
-        })),
-        ingredientes: producto.ingredientes.map((pi) => ({
-          id: pi.ingrediente.id,
-          nombre: pi.ingrediente.nombre,
-          opcional: pi.opcional,
-          porDefecto: pi.por_defecto,
-        })),
-        tamanos: producto.tamanosDisponibles.map((pt) => ({
-          id: pt.tamano.id,
-          nombre: pt.tamano.nombre,
-          precio: pt.precio,
-        })),
-      })),
-    };
+  async findOneCategoria(id: number): Promise<Categoria> {
+    const categoria = await this.prisma.categoria.findUnique({ where: { id } });
+    if (!categoria) {
+      throw new NotFoundException(`Categoria ${id} no encontrada`);
+    }
+    return categoria;
   }
 
   // ================= INGREDIENTE =================
-  async findAllIngrediente() {
-    const ingredientes = await this.prisma.ingrediente.findMany();
-
-    return ingredientes.map((ingrediente) => ({
-      id: ingrediente.id,
-      nombre: ingrediente.nombre,
-    }));
+  async findAllIngrediente(): Promise<Ingrediente[]> {
+    const result = await this.prisma.ingrediente.findMany();
+    return result;
   }
 
-  async findOneIngrediente(id: number) {
+  async findOneIngrediente(id: number): Promise<Ingrediente> {
     const ingrediente = await this.prisma.ingrediente.findUnique({
       where: { id },
     });
-
-    if (!ingrediente) return null;
-
-    return {
-      id: ingrediente.id,
-      nombre: ingrediente.nombre,
-    };
+    if (!ingrediente) {
+      throw new NotFoundException(`Ingrediente ${id} no encontrado`);
+    }
+    return ingrediente;
   }
 
-  // ================= TAMANO =================
-  async findAllTamano() {
-    const tamanos = await this.prisma.tamano.findMany();
-
-    return tamanos.map((tamano) => ({
-      id: tamano.id,
-      nombre: tamano.nombre,
-    }));
+  // ================= TAMAÑO =================
+  async findAllTamano(): Promise<Tamano[]> {
+    const result = await this.prisma.tamano.findMany();
+    return result;
   }
 
-  async findOneTamano(id: number) {
-    const tamano = await this.prisma.tamano.findUnique({
-      where: { id },
-    });
-
-    if (!tamano) return null;
-
-    return {
-      id: tamano.id,
-      nombre: tamano.nombre,
-    };
+  async findOneTamano(id: number): Promise<Tamano> {
+    const tamano = await this.prisma.tamano.findUnique({ where: { id } });
+    if (!tamano) throw new NotFoundException(`Tamaño ${id} no encontrado`);
+    return tamano;
   }
 
-  // ================= OPCIONES ================= (Reemplaza PORCION)
-  async findAllOpciones() {
-    const opciones = await this.prisma.opciones.findMany();
-
-    return opciones.map((opcion) => ({
-      id: opcion.id,
-      nombre: opcion.nombre,
-    }));
+  // ================= OPCIONES =================
+  async findAllOpciones(): Promise<Opciones[]> {
+    const result = await this.prisma.opciones.findMany();
+    return result as Opciones[];
   }
 
-  async findOneOpciones(id: number) {
-    const opcion = await this.prisma.opciones.findUnique({
-      where: { id },
-    });
-
-    if (!opcion) return null;
-
-    return {
-      id: opcion.id,
-      nombre: opcion.nombre,
-    };
+  async findOneOpciones(id: number): Promise<Opciones> {
+    const opcion = await this.prisma.opciones.findUnique({ where: { id } });
+    if (!opcion) throw new NotFoundException(`Opción ${id} no encontrada`);
+    return opcion;
   }
 
   // ================= PRODUCTO =================
-  async findAllProducto() {
-    const productos = await this.prisma.producto.findMany({
-      where: { activo: true },
+  async findAllProducto(filters?: { category?: string; nombre?: string }) {
+    const where: any = { activo: true };
+
+    // Filtro por categoría
+    if (filters?.category) {
+      const categoryFilter = filters.category;
+
+      if (!isNaN(Number(categoryFilter))) {
+        where.categoria_id = Number(categoryFilter);
+      } else {
+        where.categoria = {
+          nombre: {
+            contains: categoryFilter,
+            mode: 'insensitive',
+          },
+        };
+      }
+    }
+
+    // Filtro por nombre
+    if (filters?.nombre) {
+      where.nombre = {
+        contains: filters.nombre,
+        mode: 'insensitive',
+      };
+    }
+
+    return this.prisma.producto.findMany({
+      where,
       include: {
         categoria: true,
         tamano: true,
-        opciones: {
-          include: {
-            opcion: true,
-          },
-        },
         ingredientes: {
           include: {
             ingrediente: true,
           },
         },
+        opciones: {
+          // ← Agregar esto
+          include: {
+            opcion: true, // o el nombre de la relación según tu schema
+          },
+        },
+        tamanosDisponibles: {
+          // ← Y esto también si lo necesitas
+          include: {
+            tamano: true,
+          },
+        },
       },
+      orderBy: { nombre: 'asc' },
     });
-
-    return productos.map((producto) => ({
-      id: producto.id,
-      nombre: producto.nombre,
-      descripcion: producto.descripcion,
-      imagen: producto.imagen,
-      precio: producto.precio,
-      categoria: {
-        id: producto.categoria.id,
-        nombre: producto.categoria.nombre,
-      },
-      tamano: producto.tamano
-        ? {
-            id: producto.tamano.id,
-            nombre: producto.tamano.nombre,
-          }
-        : null,
-      opciones: producto.opciones.map((po) => ({
-        id: po.opcion.id,
-        nombre: po.opcion.nombre,
-        precio: po.precio,
-      })),
-      ingredientes: producto.ingredientes.map((pi) => ({
-        id: pi.ingrediente.id,
-        nombre: pi.ingrediente.nombre,
-        opcional: pi.opcional,
-        porDefecto: pi.por_defecto,
-      })),
-    }));
   }
 
-  async findOneProducto(id: number) {
+  async findOneProducto(id: number): Promise<ProductoWithRelations> {
     const producto = await this.prisma.producto.findUnique({
-      where: { id, activo: true },
-      include: {
-        categoria: true,
-        tamano: true,
-        opciones: {
-          include: {
-            opcion: true,
+      where: { id },
+      select: {
+        id: true,
+        nombre: true,
+        descripcion: true,
+        imagen: true,
+        precio: true,
+        activo: true,
+        categoria: { select: { id: true, nombre: true, imagen: true } },
+        tamano: { select: { id: true, nombre: true } },
+        ingredientes: {
+          select: {
+            id: true,
+            opcional: true,
+            por_defecto: true,
+            ingrediente: { select: { id: true, nombre: true } },
           },
         },
-        ingredientes: {
-          include: {
-            ingrediente: true,
+        opciones: {
+          select: {
+            id: true,
+            opcion: { select: { id: true, nombre: true } },
+          },
+        },
+        // AGREGAR tamanosDisponibles
+        tamanosDisponibles: {
+          select: {
+            id: true,
+            precio: true,
+            tamano: { select: { id: true, nombre: true } },
           },
         },
       },
     });
 
-    if (!producto) return null;
-
-    return {
-      id: producto.id,
-      nombre: producto.nombre,
-      descripcion: producto.descripcion,
-      imagen: producto.imagen,
-      precio: producto.precio,
-      categoria: {
-        id: producto.categoria.id,
-        nombre: producto.categoria.nombre,
-      },
-      tamano: producto.tamano
-        ? {
-            id: producto.tamano.id,
-            nombre: producto.tamano.nombre,
-          }
-        : null,
-      opciones: producto.opciones.map((po) => ({
-        id: po.opcion.id,
-        nombre: po.opcion.nombre,
-        precio: po.precio,
-      })),
-      ingredientes: producto.ingredientes.map((pi) => ({
-        id: pi.ingrediente.id,
-        nombre: pi.ingrediente.nombre,
-        opcional: pi.opcional,
-        porDefecto: pi.por_defecto,
-      })),
-    };
+    if (!producto) throw new NotFoundException(`Producto ${id} no encontrado`);
+    return producto;
   }
 }

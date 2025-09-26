@@ -4,10 +4,11 @@ import {
   Post,
   Body,
   Patch,
-  Delete,
   UseGuards,
   Param,
   ParseIntPipe,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { AdminPanelService } from './admin-panel.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -40,174 +41,222 @@ export class AdminPanelController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Post('adicional')
-  createAdicional(@Body() dto: CreateAdicionalDto) {
-    return this.adminPanelService.createAdicional(dto);
+  async createAdicional(@Body() dto: CreateAdicionalDto) {
+    try {
+      return await this.adminPanelService.createAdicional(dto);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Patch('adicional/:id')
-  updateAdicional(
+  async updateAdicional(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateAdicionalDto,
   ) {
-    return this.adminPanelService.updateAdicional(id, dto);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Rol.ADMIN)
-  @Delete('adicional/:id')
-  removeAdicional(@Param('id', ParseIntPipe) id: number) {
-    return this.adminPanelService.removeAdicional(id);
+    try {
+      return await this.adminPanelService.updateAdicional(id, dto);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   // ================= ESTADO PEDIDO =================
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Post('estado-pedido')
-  createEstadoPedido(@Body() dto: CreateEstadoPedidoDto) {
-    return this.adminPanelService.createEstadoPedido(dto);
+  async createEstadoPedido(@Body() dto: CreateEstadoPedidoDto) {
+    try {
+      return await this.adminPanelService.createEstadoPedido(dto);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Patch('estado-pedido/:id')
-  updateEstadoPedido(
+  async updateEstadoPedido(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateEstadoPedidoDto,
   ) {
-    return this.adminPanelService.updateEstadoPedido(id, dto);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Rol.ADMIN)
-  @Delete('estado-pedido/:id')
-  removeEstadoPedido(@Param('id', ParseIntPipe) id: number) {
-    return this.adminPanelService.removeEstadoPedido(id);
+    try {
+      return await this.adminPanelService.updateEstadoPedido(id, dto);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   // ================= CATEGORIA =================
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Post('categoria')
-  createCategoria(@Body() dto: CreateCategoriaDto) {
-    return this.adminPanelService.createCategoria(dto);
+  async createCategoria(@Body() dto: CreateCategoriaDto) {
+    try {
+      return await this.adminPanelService.createCategoria(dto);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Patch('categoria/:id')
-  updateCategoria(
+  async updateCategoria(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCategoriaDto,
   ) {
-    return this.adminPanelService.updateCategoria(id, dto);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Rol.ADMIN)
-  @Delete('categoria/:id')
-  removeCategoria(@Param('id', ParseIntPipe) id: number) {
-    return this.adminPanelService.removeCategoria(id);
+    try {
+      return await this.adminPanelService.updateCategoria(id, dto);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   // ================= INGREDIENTE =================
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Post('ingrediente')
-  createIngrediente(@Body() dto: CreateIngredienteDto) {
-    return this.adminPanelService.createIngrediente(dto);
+  async createIngrediente(@Body() dto: CreateIngredienteDto) {
+    try {
+      return await this.adminPanelService.createIngrediente(dto);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Patch('ingrediente/:id')
-  updateIngrediente(
+  async updateIngrediente(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateIngredienteDto,
   ) {
-    return this.adminPanelService.updateIngrediente(id, dto);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Rol.ADMIN)
-  @Delete('ingrediente/:id')
-  removeIngrediente(@Param('id', ParseIntPipe) id: number) {
-    return this.adminPanelService.removeIngrediente(id);
+    try {
+      return await this.adminPanelService.updateIngrediente(id, dto);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   // ================= TAMANO =================
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Post('tamano')
-  createTamano(@Body() dto: CreateTamanoDto) {
-    return this.adminPanelService.createTamano(dto);
+  async createTamano(@Body() dto: CreateTamanoDto) {
+    try {
+      return await this.adminPanelService.createTamano(dto);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Patch('tamano/:id')
-  updateTamano(
+  async updateTamano(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateTamanoDto,
   ) {
-    return this.adminPanelService.updateTamano(id, dto);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Rol.ADMIN)
-  @Delete('tamano/:id')
-  removeTamano(@Param('id', ParseIntPipe) id: number) {
-    return this.adminPanelService.removeTamano(id);
+    try {
+      return await this.adminPanelService.updateTamano(id, dto);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   // ================= OPCIONES =================
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Post('opciones')
-  createOpciones(@Body() dto: CreateOpcionesDto) {
-    return this.adminPanelService.createOpciones(dto);
+  async createOpciones(@Body() dto: CreateOpcionesDto) {
+    try {
+      return await this.adminPanelService.createOpciones(dto);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Internal server error';
+
+      throw new HttpException(message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Patch('opciones/:id')
-  updateOpciones(
+  async updateOpciones(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateOpcionesDto,
   ) {
-    return this.adminPanelService.updateOpciones(id, dto);
+    try {
+      return await this.adminPanelService.updateOpciones(id, dto);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Rol.ADMIN)
-  @Delete('opciones/:id')
-  removeOpciones(@Param('id', ParseIntPipe) id: number) {
-    return this.adminPanelService.removeOpciones(id);
-  }
-
   // ================= PRODUCTO =================
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Post('producto')
-  createProducto(@Body() dto: CreateProductoDto) {
-    return this.adminPanelService.createProducto(dto);
+  async createProducto(@Body() dto: CreateProductoDto) {
+    try {
+      return await this.adminPanelService.createProducto(dto);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMIN)
   @Patch('producto/:id')
-  updateProducto(
+  async updateProducto(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateProductoDto,
   ) {
-    return this.adminPanelService.updateProducto(id, dto);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Rol.ADMIN)
-  @Delete('producto/:id')
-  removeProducto(@Param('id', ParseIntPipe) id: number) {
-    return this.adminPanelService.removeProducto(id);
+    try {
+      return await this.adminPanelService.updateProducto(id, dto);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

@@ -4,11 +4,12 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export async function seedProducto(): Promise<void> {
-  // Limpiar tablas
+  // Limpiar tablas relacionadas con productos
   await prisma.productoIngrediente.deleteMany();
+  await prisma.productoOpcion.deleteMany(); // ✅ limpiar pivot
   await prisma.producto.deleteMany();
 
-  // 🥪 Pan con Chicharrón
+  // 🥪 Pan con Chicharrón - Tiene opciones de porción
   await prisma.producto.create({
     data: {
       id: 1,
@@ -18,7 +19,6 @@ export async function seedProducto(): Promise<void> {
       precio: 12.5,
       categoria_id: 1,
       tamano_id: 3,
-      porcion_id: 1,
       ingredientes: {
         create: [
           { ingrediente_id: 1, opcional: true, por_defecto: true },
@@ -26,10 +26,17 @@ export async function seedProducto(): Promise<void> {
           { ingrediente_id: 3, opcional: true, por_defecto: true },
         ],
       },
+      opciones: {
+        create: [
+          { opcion_id: 1 }, // Panceta
+          { opcion_id: 2 }, // Carne
+          { opcion_id: 3 }, // Combinado
+        ],
+      },
     },
   });
 
-  // 🥪 Pan con Hot Dog
+  // 🥪 Pan con Hot Dog - No tiene opciones de porción
   await prisma.producto.create({
     data: {
       id: 2,
@@ -39,7 +46,6 @@ export async function seedProducto(): Promise<void> {
       precio: 8.0,
       categoria_id: 1,
       tamano_id: 3,
-      porcion_id: 2,
       ingredientes: {
         create: [
           { ingrediente_id: 4, opcional: true, por_defecto: true },
@@ -49,7 +55,7 @@ export async function seedProducto(): Promise<void> {
     },
   });
 
-  // ☕ Café
+  // ☕ Café - No tiene opciones de porción
   await prisma.producto.create({
     data: {
       id: 3,
@@ -69,7 +75,7 @@ export async function seedProducto(): Promise<void> {
     },
   });
 
-  // 🥤 Jugo de Fresa
+  // 🥤 Jugo de Fresa - Tiene opciones de temperatura
   await prisma.producto.create({
     data: {
       id: 4,
@@ -86,12 +92,16 @@ export async function seedProducto(): Promise<void> {
           { ingrediente_id: 8, opcional: true, por_defecto: false },
         ],
       },
+      opciones: {
+        create: [
+          { opcion_id: 4 }, // Sin helar
+          { opcion_id: 5 }, // Helada
+        ],
+      },
     },
   });
 
-  console.log(
-    '✅ Productos insertados con ingredientes directamente en pivote',
-  );
+  console.log('✅ Productos insertados con opciones e ingredientes');
 
   await prisma.$disconnect();
 }

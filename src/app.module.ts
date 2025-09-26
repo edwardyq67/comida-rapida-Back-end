@@ -6,6 +6,8 @@ import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AdminPanelModule } from './admin-panel/admin-panel.module';
 import { PublicPanelModule } from './public/public.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { ImagesModule } from './images/images.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { PublicPanelModule } from './public/public.module';
     AuthModule,
     AdminPanelModule,
     PublicPanelModule,
+    CloudinaryModule,
+    ImagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

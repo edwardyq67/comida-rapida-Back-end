@@ -1,4 +1,4 @@
-// public.entity.ts
+// src/public/public.entity.ts
 import type {
   Adicional,
   EstadoPedido,
@@ -7,15 +7,26 @@ import type {
   Tamano,
   Opciones,
   Producto,
+  Pedido,
+  PedidoItem,
+  PedidoAdicional,
+  ProductoTamano,
+  ProductoIngrediente,
+  ProductoOpcion,
 } from '@prisma/client';
 
-export type AdminPanelEntity =
-  | Adicional
-  | EstadoPedido
-  | Categoria
-  | Ingrediente
-  | Tamano
-  | Opciones
-  | Producto;
-
-// Solo exporta tipos, no valores
+export type {
+  Adicional,
+  EstadoPedido,
+  Categoria,
+  Ingrediente,
+  Tamano,
+  Opciones,
+  Producto,
+  Pedido,
+  PedidoItem,
+  PedidoAdicional,
+  ProductoTamano,
+  ProductoIngrediente,
+  ProductoOpcion,
+};

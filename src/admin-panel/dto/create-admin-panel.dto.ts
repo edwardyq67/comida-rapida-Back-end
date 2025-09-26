@@ -1,6 +1,16 @@
 // src/admin-panel/dto/create-admin-panel.dto.ts
-import { IsNotEmpty, IsOptional, IsNumber, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsNumber,
+  IsString,
+  IsBoolean,
+  ValidateNested,
+  IsArray,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
+// ================= ADICIONAL =================
 export class CreateAdicionalDto {
   @IsNotEmpty()
   @IsString()
@@ -13,14 +23,20 @@ export class CreateAdicionalDto {
   @IsOptional()
   @IsString()
   imagen?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  activo?: boolean;
 }
 
+// ================= ESTADO PEDIDO =================
 export class CreateEstadoPedidoDto {
   @IsNotEmpty()
   @IsString()
   nombre: string;
 }
 
+// ================= CATEGORIA =================
 export class CreateCategoriaDto {
   @IsNotEmpty()
   @IsString()
@@ -29,30 +45,70 @@ export class CreateCategoriaDto {
   @IsOptional()
   @IsString()
   imagen?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  activo?: boolean;
 }
 
+// ================= INGREDIENTE =================
 export class CreateIngredienteDto {
   @IsNotEmpty()
   @IsString()
   nombre: string;
 }
 
+// ================= TAMAÑO =================
 export class CreateTamanoDto {
   @IsNotEmpty()
   @IsString()
   nombre: string;
 }
 
+// ================= OPCIONES =================
 export class CreateOpcionesDto {
   @IsNotEmpty()
   @IsString()
   nombre: string;
+}
+
+// ================= SUB-DTOs PARA PRODUCTO =================
+export class ProductoIngredienteInput {
+  @IsNotEmpty()
+  @IsNumber()
+  ingrediente_id: number;
+
+  @IsOptional()
+  @IsBoolean()
+  opcional?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  por_defecto?: boolean;
+}
+
+export class ProductoOpcionInput {
+  @IsNotEmpty()
+  @IsNumber()
+  opcion_id: number;
+
+  // ELIMINAR precio ya que no lo necesitas
+  // @IsOptional()
+  // @IsNumber()
+  // precio?: number;
+}
+
+export class ProductoTamanoInput {
+  @IsNotEmpty()
+  @IsNumber()
+  tamano_id: number;
 
   @IsNotEmpty()
   @IsNumber()
   precio: number;
 }
 
+// ================= PRODUCTO =================
 export class CreateProductoDto {
   @IsNotEmpty()
   @IsString()
@@ -66,9 +122,13 @@ export class CreateProductoDto {
   @IsString()
   imagen?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsNumber()
-  precio: number;
+  precio?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  activo?: boolean;
 
   @IsNotEmpty()
   @IsNumber()
@@ -78,7 +138,22 @@ export class CreateProductoDto {
   @IsNumber()
   tamano_id?: number;
 
+  // relaciones
   @IsOptional()
-  @IsNumber()
-  opciones_id?: number;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductoIngredienteInput)
+  ingredientes?: ProductoIngredienteInput[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductoOpcionInput)
+  opciones?: ProductoOpcionInput[]; // ← Ahora solo espera opcion_id
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductoTamanoInput)
+  tamanosDisponibles?: ProductoTamanoInput[];
 }
